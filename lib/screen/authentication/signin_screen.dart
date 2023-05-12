@@ -11,6 +11,7 @@ import 'package:movie_app/theme/widget/dialog/loading_dialog.dart';
 import 'package:movie_app/theme/widget/input/text_email.dart';
 import 'package:movie_app/theme/widget/input/text_password.dart';
 import 'package:movie_app/utils/constant.dart';
+import 'package:movie_app/view_model/auth_viewmodel/auth_event.dart';
 import 'package:movie_app/view_model/auth_viewmodel/auth_viewmodel.dart';
 import 'package:provider/provider.dart';
 
@@ -33,7 +34,8 @@ class _SignInScreenState extends State<SignInScreen> {
   void checkLogin() {
     Future.delayed(const Duration(milliseconds: 700), () {
       final viewModel = GetIt.instance.get<AuthViewModel>();
-      viewModel.isLogin();
+      viewModel.event(event: IsLoginEvent());
+
       if (viewModel.isLoginResult) {
         Navigator.push(
             context,
@@ -42,6 +44,19 @@ class _SignInScreenState extends State<SignInScreen> {
             ));
       }
     });
+  }
+
+  void loginSuccess({required BuildContext context}) {
+    Navigator.pop(context);
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HomeScreen(),
+        ));
+  }
+
+  void loginError({required BuildContext context}) {
+    Navigator.pop(context);
   }
 
   @override
@@ -80,7 +95,8 @@ class _SignInScreenState extends State<SignInScreen> {
                     ///email
                     TextEmail(
                         size: size,
-                        onChanged: (it) => viewModel.emailChange(it),
+                        onChanged: (it) =>
+                            viewModel.event(event: EmailChangeEvent(value: it)),
                         error: viewModel.email.error),
 
                     ///password
@@ -88,7 +104,8 @@ class _SignInScreenState extends State<SignInScreen> {
                       return TextPassword(
                           size: size,
                           visible: value.visible,
-                          onChanged: (it) => viewModel.passwordChange(it),
+                          onChanged: (it) => viewModel.event(
+                              event: PasswordChangeEvent(value: it)),
                           error: viewModel.password.error);
                     }),
                   ],
@@ -112,7 +129,8 @@ class _SignInScreenState extends State<SignInScreen> {
                           shape: RoundedRectangleBorder(
                               borderRadius:
                                   BorderRadius.circular(Dimens.kSmall * 1.2)),
-                          onChanged: (value) => auth.onAccept(value)),
+                          onChanged: (value) =>
+                              auth.event(event: AcceptEvent(accept: value))),
                       Text(
                         "Accept",
                         style: Theme.of(context).textTheme.bodyMedium,
@@ -139,23 +157,18 @@ class _SignInScreenState extends State<SignInScreen> {
                 splashColor: kItemColor.withOpacity(.23),
                 onTap: () {
                   final viewModel = GetIt.instance.get<AuthViewModel>();
-                  viewModel.onValidate(() {
+                  ///check validate data
+                  viewModel.event(event: ValidateLoginEvent(valid: () {
                     loadingDialog(context: context);
-                    viewModel.onSignIn(
-                        LoginRequest(
-                            email: '${viewModel.email.value}',
-                            password: '${viewModel.password.value}'),
-                        result: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const HomeScreen(),
-                          ));
-                    }, error: () {
-                      Navigator.pop(context);
-                    });
-                  });
+                    ///call login
+                    viewModel.event(
+                        event: SignInEvent(
+                            request: LoginRequest(
+                                email: '${viewModel.email.value}',
+                                password: '${viewModel.password.value}'),
+                            result: () => loginSuccess(context: context),
+                            error: () => loginError(context: context)));
+                  }));
                 },
                 child: Container(
                   alignment: Alignment.center,

@@ -4,11 +4,48 @@ import 'package:movie_app/models/authentication/login_request.dart';
 import 'package:movie_app/models/validation/validate_data.dart';
 import 'package:movie_app/service/authentication/auth_service.dart';
 import 'package:movie_app/utils/extension.dart';
+import 'package:movie_app/view_model/auth_viewmodel/auth_event.dart';
 import 'package:movie_app/view_model/base_viewmodel.dart';
+import 'package:movie_app/utils/log.dart';
 
 @singleton
 class AuthViewModel extends BaseViewModel {
   final _authService = GetIt.instance.get<AuthService>();
+
+  @override
+  void event<BaseAuthEvent>({required BaseAuthEvent event}) {
+    switch (event) {
+      case CreateAccountEvent _:
+        onCreateAccount(event.request,
+            result: event.result, error: event.error);
+      case SignInEvent _:
+        onSignIn(event.request, result: event.result, error: event.error);
+      case SignOutEvent _:
+        onSignOut();
+      case IsLoginEvent _:
+        isLogin();
+      case GetUidEvent _:
+        getUUID();
+      case PasswordVisibleEvent _:
+        passwordVisible(event.visible);
+      case CfPasswordVisibleEvent _:
+        passwordVisible(event.visible);
+      case AcceptEvent _:
+        onAccept(event.accept);
+      case EmailChangeEvent _:
+        emailChange(event.value);
+      case PasswordChangeEvent _:
+        passwordChange(event.value);
+      case CfPasswordChangeEvent _:
+        cfPasswordChange(event.value);
+      case ValidateLoginEvent _:
+        onValidate(event.valid);
+      case ValidateRegisterEvent _:
+        onValidateRegister(event.valid);
+      default:
+        Log.instance.error("Not Found Auth Events");
+    }
+  }
 
   ///create account with email-password
   bool _createAccountResult = false;
@@ -130,7 +167,7 @@ class AuthViewModel extends BaseViewModel {
     notifyListeners();
   }
 
-  void onValidate(Function() valid) {
+  void onValidate(void Function() valid) {
     if ('${_email.value}' == "") {
       _email.error = "Email Is Empty";
     } else if ('${password.value}' == "") {
@@ -159,7 +196,7 @@ class AuthViewModel extends BaseViewModel {
     notifyListeners();
   }
 
-  void onValidateRegister(Function() valid) {
+  void onValidateRegister(void Function() valid) {
     if ('${_email.value}' == "") {
       _email.error = "Email Is Empty";
     } else if ('${password.value}' == "") {

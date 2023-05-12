@@ -18,4 +18,9 @@ class NavViewModel extends BaseViewModel {
     _showSheet = show;
     notifyListeners();
   }
+
+  @override
+  void event<T>({required T event}) {
+    // TODO: implement event
+  }
 }

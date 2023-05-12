@@ -101,4 +101,9 @@ class MoiveViewModel extends BaseViewModel {
     }
     notifyListeners();
   }
+
+  @override
+  void event<T>({required T event}) {
+    // TODO: implement event
+  }
 }

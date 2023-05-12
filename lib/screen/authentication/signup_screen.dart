@@ -10,6 +10,7 @@ import 'package:movie_app/theme/widget/dialog/loading_dialog.dart';
 import 'package:movie_app/theme/widget/input/text_email.dart';
 import 'package:movie_app/theme/widget/input/text_password.dart';
 import 'package:movie_app/utils/constant.dart';
+import 'package:movie_app/view_model/auth_viewmodel/auth_event.dart';
 import 'package:movie_app/view_model/auth_viewmodel/auth_viewmodel.dart';
 import 'package:provider/provider.dart';
 
@@ -21,6 +22,19 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+
+  onSuccess({required BuildContext context}) {
+    Navigator.pop(context);
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => const HomeScreen()));
+  }
+
+  onError({required BuildContext context}) {
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
@@ -59,28 +73,33 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ///email
                     TextEmail(
                         size: size,
-                        onChanged: (it) => viewModel.emailChange(it),
+                        onChanged: (it) =>
+                            viewModel.event(event: EmailChangeEvent(value: it)),
                         error: viewModel.email.error),
 
                     ///password
                     Consumer<AuthViewModel>(builder: (context, value, child) {
                       return TextPassword(
-                          onVisible: () =>
-                              value.passwordVisible(!value.visible),
+                          onVisible: () => value.event(
+                              event: PasswordVisibleEvent(
+                                  visible: !value.visible)),
                           size: size,
                           visible: value.visible,
-                          onChanged: (it) => viewModel.passwordChange(it),
+                          onChanged: (it) => viewModel.event(
+                              event: PasswordChangeEvent(value: it)),
                           error: viewModel.password.error);
                     }),
 
                     ///confirm password
                     Consumer<AuthViewModel>(builder: (context, value, child) {
                       return TextPassword(
-                          onVisible: () =>
-                              value.cfPasswordVisible(!value.cfVisible),
+                          onVisible: () => value.event(
+                              event: CfPasswordVisibleEvent(
+                                  visible: !value.cfVisible)),
                           size: size,
                           visible: value.cfVisible,
-                          onChanged: (it) => viewModel.cfPasswordChange(it),
+                          onChanged: (it) => viewModel.event(
+                              event: CfPasswordChangeEvent(value: it)),
                           error: viewModel.cfPassword.error);
                     }),
                   ],
@@ -128,22 +147,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 splashColor: kItemColor.withOpacity(.23),
                 onTap: () {
                   final viewModel = GetIt.instance.get<AuthViewModel>();
-                  viewModel.onValidateRegister(() {
+
+                  ///validate
+                  viewModel.event(event: ValidateRegisterEvent(valid: () {
+                    ///loading dialog
                     loadingDialog(context: context);
-                    viewModel.onCreateAccount(
-                        LoginRequest(
-                            email: '${viewModel.email.value}',
-                            password: '${viewModel.password.value}'),
-                        result: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const HomeScreen()));
-                    }, error: () {
-                      Navigator.pop(context);
-                    });
-                  });
+
+                    ///call create account
+                    viewModel.event(
+                        event: CreateAccountEvent(
+                            request: LoginRequest(
+                                email: '${viewModel.email.value}',
+                                password: '${viewModel.password.value}'),
+                            result: () => onSuccess(context: context),
+                            error: () => onError(context: context)));
+                  }));
                 },
                 child: Container(
                   alignment: Alignment.center,

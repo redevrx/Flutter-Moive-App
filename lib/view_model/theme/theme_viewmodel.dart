@@ -12,4 +12,9 @@ class ThemeViewModel extends BaseViewModel {
     _themeData = theme;
     notifyListeners();
   }
+
+  @override
+  void event<T>({required T event}) {
+    // TODO: implement event
+  }
 }
